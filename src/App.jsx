@@ -1,164 +1,115 @@
 import { useState } from 'react';
-import Logo from './components/Logo.jsx';
+import { SITE } from './config/site.js';
 import { WORKS } from './data/works.js';
-import { MASTER } from './config/master.js';
 import { activeProvider } from './payment/provider.js';
 
-const SERVICES = [
-  {
-    title: 'Косметический ремонт',
-    price: 'от 4 500 ₽/м²',
-    points: ['Поклейка обоев, покраска', 'Замена напольного покрытия', 'Уборка после работ'],
-  },
-  {
-    title: 'Ремонт под ключ',
-    price: 'от 9 800 ₽/м²',
-    featured: true,
-    points: ['Дизайн-проект и смета', 'Черновая и чистовая отделка', 'Электрика и сантехника', 'Гарантия 2 года'],
-  },
-  {
-    title: 'Отдельные работы',
-    price: 'по договорённости',
-    points: ['Укладка плитки', 'Электромонтаж', 'Сборка мебели'],
-  },
+const STEPS = [
+  { n: '01', title: 'Идея', text: 'Присылаете фото или описание вещи, которую хотите.' },
+  { n: '02', title: 'Обсуждение', text: 'Согласуем дизайн, материалы, размер и сроки.' },
+  { n: '03', title: 'Пошив', text: 'Создаём кастом и показываем процесс по фото.' },
+  { n: '04', title: 'Оплата и доставка', text: 'Онлайн-оплата скоро — сейчас всё оформляем в Telegram.' },
 ];
 
 export default function App() {
-  const [loading, setLoading] = useState(false);
+  const [zoom, setZoom] = useState(null);
+  const [busy, setBusy] = useState(false);
 
-  // Оплата-заглушка: вместо банковского эквайринга ведём клиента к мастеру.
-  async function handlePay(service) {
-    setLoading(true);
+  // Сейчас «оплата» = переход на оформление заказа в Telegram.
+  async function handleOrder(source) {
+    setBusy(true);
     try {
-      const result = await activeProvider.createPayment({
+      const res = await activeProvider.createPayment({
         orderId: `ali-${Date.now()}`,
-        description: `${service.title} — заказ через AliPaySite`,
-        amount: service.price,
+        description: source,
       });
-      if (result.message) console.info(result.message);
-      window.open(result.redirectUrl, '_blank', 'noopener');
-    } catch (e) {
-      alert('Не удалось инициировать оплату: ' + e.message);
+      if (res.message) console.info(res.message);
+      window.open(res.redirectUrl, '_blank', 'noopener');
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   }
 
   return (
-    <>
+    <div className="page">
       <header className="header">
-        <div className="container">
-          <a className="brand" href="#top">
-            <Logo size={38} />
-            <span className="brand-name">
-              Али<span>Pay</span> · мастер
-            </span>
-          </a>
-          <nav className="nav">
-            <a href="#services">Услуги</a>
-            <a href="#works">Работы</a>
-            <a href="#pay">Оплата</a>
-            <a href={MASTER.contactUrl}>Контакты</a>
-          </nav>
-        </div>
+        <a className="brand" href="#top" aria-label={SITE.name}>
+          <img src="/logo.png" alt="Логотип ALI" className="brand-logo" width="40" height="40" />
+          <span className="brand-name">{SITE.name}</span>
+        </a>
+        <nav className="nav">
+          <a href="#works">Работы</a>
+          <a href="#order">Как заказать</a>
+        </nav>
+        <button className="btn btn-sm" onClick={() => handleOrder('Кнопка в шапке')}>
+          Заказать
+        </button>
       </header>
 
       <main id="top">
         <section className="hero">
-          <div className="container">
-            <span className="badge">
-              {activeProvider.isStub ? 'Онлайн-оплата временно через мастера' : `Оплата: ${activeProvider.label}`}
-            </span>
-            <h1>
-              Ремонт и отделка <em>под ключ</em> от мастера Али
-            </h1>
-            <p>
-              Честная смета, аккуратная работа и гарантия. Выберите услугу — оплата
-              оформляется напрямую со мной, без посредников и предоплат втемную.
-            </p>
-            <div className="hero-actions">
-              <a className="btn btn-primary" href="#services">Выбрать услугу</a>
-              <a className="btn btn-ghost" href={MASTER.contactUrl}>
-                Написать в {MASTER.contactLabel.split(' ')[0]}
-              </a>
-            </div>
+          <div className="hero-glow" aria-hidden="true" />
+          <p className="eyebrow">Индивидуальный пошив · ручная работа</p>
+          <h1 className="hero-title">
+            КАСТОМНАЯ<br />
+            <span className="grad">ОДЕЖДА</span><br />
+            НА ЗАКАЗ
+          </h1>
+          <p className="hero-sub">
+            Уникальные вещи, которых больше ни у кого нет. Выберите идею из работ
+            или пришлите свою — воплотим.
+          </p>
+          <div className="hero-actions">
+            <button className="btn" disabled={busy} onClick={() => handleOrder('Hero-кнопка')}>
+              {busy ? 'Открываем…' : 'Заказать'}
+            </button>
+            <a className="btn btn-ghost" href="#works">Смотреть работы</a>
+          </div>
+          <span className="pill">Оплата онлайн — скоро · пока заказ через Telegram</span>
+        </section>
+
+        <section id="works" className="section">
+          <h2 className="section-title">Наши <span className="grad">работы</span></h2>
+          <div className="gallery">
+            {WORKS.map((w) => (
+              <figure key={w.src} className="work" onClick={() => setZoom(w)}>
+                <img src={w.src} alt={w.title} loading="lazy" />
+                <figcaption>{w.title}</figcaption>
+              </figure>
+            ))}
           </div>
         </section>
 
-        <section id="services">
-          <div className="container">
-            <h2 className="section-title">Услуги и цены</h2>
-            <p className="section-sub">Ориентировочные стоимости — финальная цена после замера и сметы.</p>
-            <div className="grid">
-              {SERVICES.map((s) => (
-                <article key={s.title} className={`card${s.featured ? ' featured' : ''}`}>
-                  <h3>{s.title}</h3>
-                  <div className="price">{s.price}</div>
-                  <ul>
-                    {s.points.map((p) => <li key={p}>{p}</li>)}
-                  </ul>
-                  <button className="btn btn-primary" disabled={loading} onClick={() => handlePay(s)}>
-                    Оплатить / Заказать
-                  </button>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="works">
-          <div className="container">
-            <h2 className="section-title">Фото работ</h2>
-            <p className="section-sub">Портфолио мастера — реальные объекты после ремонта.</p>
-            <div className="gallery">
-              {WORKS.map((w) => (
-                <figure key={w.title} className="work">
-                  <img src={w.src} alt={w.title} loading="lazy" />
-                  <figcaption className="work-meta">
-                    <strong>{w.title}</strong>
-                    <span className="tag">{w.tag}</span>
-                  </figcaption>
-                </figure>
-              ))}
-            </div>
-            <div className="note">
-              <b>Пока здесь плейсхолдеры.</b> Твои фото не дошли до репозитория — положи их в{' '}
-              <code>public/photos/</code> и добавь пути в <code>src/data/works.js</code>, и галерея
-              сразу оживёт.
-            </div>
-          </div>
-        </section>
-
-        <section id="pay">
-          <div className="container">
-            <h2 className="section-title">Как оплатить</h2>
-            <div className="paybox">
-              <span className="status">
-                Провайдер: {activeProvider.label} {activeProvider.isStub && '· заглушка'}
-              </span>
-              <p>
-                Банковский эквайринг ещё не подключён. Сейчас кнопка «Оплатить» открывает{' '}
-                {MASTER.contactLabel} ({MASTER.contactUrl}) — там согласовываем сумму и способ
-                оплаты. В следующем обновлении подключим <b>Platega API</b>: оплата картой и СБП
-                прямо на сайте.
-              </p>
-              <div className="pay-methods">
-                <span>Скоро: карты Visa / MC / МИР</span>
-                <span>Скоро: СБП</span>
-                <span>Сейчас: напрямую мастеру</span>
-              </div>
-              <a className="btn btn-primary" href={MASTER.contactUrl}>Перейти к мастеру</a>
-            </div>
+        <section id="order" className="section">
+          <h2 className="section-title">Как <span className="grad">заказать</span></h2>
+          <ol className="steps">
+            {STEPS.map((s) => (
+              <li key={s.n} className="step">
+                <span className="step-num">{s.n}</span>
+                <h3>{s.title}</h3>
+                <p>{s.text}</p>
+              </li>
+            ))}
+          </ol>
+          <div className="cta">
+            <p>Готовы обсудить вашу вещь?</p>
+            <button className="btn" disabled={busy} onClick={() => handleOrder('CTA-блок')}>
+              Заказать
+            </button>
           </div>
         </section>
       </main>
 
-      <footer>
-        <div className="container">
-          <Logo size={26} />
-          <span>© {new Date().getFullYear()} Али · AliPaySite — {MASTER.phone}</span>
-        </div>
+      <footer className="footer">
+        <img src="/logo.png" alt="" width="28" height="28" />
+        <span>© {new Date().getFullYear()} {SITE.name} — {SITE.tagline.toLowerCase()}</span>
       </footer>
-    </>
+
+      {zoom && (
+        <div className="lightbox" onClick={() => setZoom(null)} role="dialog" aria-label={zoom.title}>
+          <img src={zoom.src} alt={zoom.title} />
+          <span className="lightbox-close">×</span>
+        </div>
+      )}
+    </div>
   );
 }

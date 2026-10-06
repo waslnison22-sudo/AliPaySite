@@ -1,31 +1,37 @@
-# Ali · AliPaySite
+# ALI · Кастомная одежда на заказ
 
-Сайт мастера Али: услуги, портфолио работ, оплата.
+Лендинг-витрина: галерея реальных работ, шаги оформления заказа и подготовка к приёму оплаты.
 
 ## Стек
-React 18 + Vite. Запуск: `npm install && npm run dev`.
+React 18 + Vite. Стиль — фирменный (чёрный фон + неоново-сине-фиолетовый градиент официального логотипа). Логотип и favicon — официальные файлы магазина (`public/logo.png`, `public/favicon.png`).
 
-## Фирменный стиль
-- Палитра: янтарь `#F5B544` → медь `#E8722A` на графите `#0D0A07` (`src/styles.css`, CSS-переменные).
-- Иконка/логотип: монограмма «А» + монета — `src/components/Logo.jsx` и `public/favicon.svg`.
-
-## Оплата
-Сейчас — **заглушка**: кнопки оплаты ведут на ссылку мастера (`src/config/master.js`).
-Замена ссылки на реальную = одна правка в этом файле.
-
-План боевого подключения — **Platega API**:
-1. Кабинет Platega → Merchant Login/Password (только на сервере!).
-2. Бэкенд: `POST /api/payments/create` → `POST https://app-api.platega.io/2.0/payment/direct/prepare`, ответом `paymentUrl`.
-3. `.env`: `VITE_PAYMENT_PROVIDER=platega`, `VITE_PAYMENT_API=...` — код менять не нужно, `PlategaProvider` уже готов (`src/payment/provider.js`).
-
-## Фото работ
-Положи снимки в `public/photos/` и добавь записи в `src/data/works.js` — галерея подхватит их автоматически. Сейчас там стилизованные плейсхолдеры.
-
+## Запуск
+```bash
+npm install
+npm run dev        # http://localhost:5173
+npm run build      # прод-сборка в dist/
 ```
-src/
-├── App.jsx              # страницы и секции
-├── components/Logo.jsx  # фирменная иконка
-├── config/master.js     # контакты/ссылка мастера
-├── data/works.js        # портфолио
-└── payment/provider.js  # contact-заглушка + Platega
+
+## Оплата / заказ
+Сейчас кнопки **«Заказать»** ведут на Telegram с готовым текстом сообщения — это заглушка вместо эквайринга. Слово «мастер» на сайте не используется.
+
+Ссылка настраивается в одном месте: `src/config/site.js` → `SITE.orderUrl`.
+
+### Подключение Platega (в планах)
+1. Зарегистрироваться на https://platega.io и получить Merchant-Login / Merchant-Password.
+2. Реализовать бэкенд-эндпоинт `POST /api/payments/platega/create`, который хранит ключи и вызывает
+   `app-api.platega.io` (`POST /2.0/payment/direct/prepare`). Ключи — только на сервере.
+3. Раскомментировать `PlategaProvider` в `src/payment/provider.js`.
+4. Создать `.env` из `.env.example` и указать `VITE_PAYMENT_PROVIDER=platega`.
+
+Фронтенд менять не придётся — переключение через интерфейс `activeProvider`.
+
+## Структура
+```
+public/logo.png, favicon.png   — официальный логотип и иконка
+public/photos/                 — фото работ (галерея)
+src/App.jsx                    — страницы/секции
+src/config/site.js             — контакты и ссылка заказа
+src/data/works.js              — список работ для галереи
+src/payment/provider.js        — платёжная абстракция (contact → platega)
 ```
