@@ -100,8 +100,13 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        <img src="/logo.png" alt="" width="28" height="28" />
-        <span>© {new Date().getFullYear()} {SITE.name} — {SITE.tagline.toLowerCase()}</span>
+        <div className="footer-brand">
+          <img src="/logo.png" alt="" width="28" height="28" />
+          <span>© {new Date().getFullYear()} {SITE.name} — {SITE.tagline.toLowerCase()}</span>
+        </div>
+        <a className="footer-tg" href={SITE.telegramUrl} target="_blank" rel="noopener noreferrer">
+          Telegram
+        </a>
       </footer>
 
       {zoom && (

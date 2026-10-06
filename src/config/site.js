@@ -10,4 +10,7 @@ export const SITE = {
     encodeURIComponent(
       'Привет, хотел(-а) бы заказать у вас кастомную одежду! (далее сразу напишите что вам нужно)'
     ),
+  // Дополнительные контакты
+  telegramUrl: 'https://t.me/VespidKitten875',
+  photosBaseUrl: 'https://fotora.ru/uploaded/?ID=ESRWR05102026202728',
 };

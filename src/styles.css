@@ -165,7 +165,11 @@ main { flex: 1; }
   padding: 26px 16px; color: var(--muted); font-size: 14px;
   border-top: 1px solid var(--line);
 }
+.footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.footer-brand { display: flex; align-items: center; gap: 10px; }
 .footer img { border-radius: 50%; }
+.footer-tg { color: var(--violet); text-decoration: none; font-weight: 700; font-size: 14px; }
+.footer-tg:hover { color: var(--text); }
 .lightbox {
   position: fixed; inset: 0; z-index: 50;
   background: rgba(0, 0, 0, 0.88);
