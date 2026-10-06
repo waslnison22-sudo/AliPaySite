@@ -1,1 +1,1 @@
-export const SITE={name:'ALI',title:'Кастомная одежда',tagline:'Вещи с характером. Сделанные для тебя.',telegramUrl:'https://t.me/VespidKitten875',orderUrl:'https://t.me/VespidKitten875?text='+encodeURIComponent('Привет! Хочу заказать кастомную одежду.')};
+export const SITE={name:'AliPay',title:'Кастомная одежда',tagline:'Вещи с характером. Сделанные для тебя.',telegramUrl:'https://t.me/VespidKitten875',orderUrl:'https://t.me/VespidKitten875?text='+encodeURIComponent('Привет! Хочу заказать кастомную одежду.')};
