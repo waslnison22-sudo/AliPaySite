@@ -1,85 +1,67 @@
-/**
- * Платёжный модуль AliPaySite.
- *
- * Архитектура: единый интерфейс PaymentProvider с реализациями.
- * Сейчас активна заглушка (StubProvider) — реальных списаний нет.
- * Для боевого запуска достаточно:
- *   1) реализовать/подключить YooKassaProvider или StripeProvider;
- *   2) выставить VITE_PAYMENT_PROVIDER в .env;
- *   3) добавить серверный эндпоинт для создания платежей (секреты — только на сервере!).
- */
+// Платёжная абстракция AliPaySite.
+//
+// Сейчас активен ContactProvider: вместо банковской оплаты сайт ведёт
+// клиента напрямую к мастеру (ссылка из src/config/master.js).
+//
+// В качестве боевого провайдера запланирован Platega API (https://platega.com):
+//   1. Зарегистрироваться в личном кабинете Platega, получить Merchant Login / Password.
+//   2. На бэкенде создать эндпоинт POST /api/payments/create, который шлёт:
+//        POST https://app-api.platega.io/2.0/payment/direct/prepare
+//        Headers: Merchant-Login, Merchant-Password, Content-Type: application/json
+//        Body: { amount, currency: "RUB", orderId, description, successUrl, failUrl }
+//      и возвращает клиенту { paymentUrl } из ответа Platega.
+//   3. Выдать ссылку на эндпоинт в VITE_PAYMENT_API (см. .env.example) и
+//      переключить VITE_PAYMENT_PROVIDER=contact -> platega.
+//
+// Ключи Мерчанта хранятся ТОЛЬКО на сервере — никогда во фронтенде.
 
-const CURRENCY_SYMBOL = { RUB: '₽', USD: '$', EUR: '€' };
+import { MASTER } from '../config/master.js';
 
-export function formatPrice(amount, currency = 'RUB') {
-  const sym = CURRENCY_SYMBOL[currency] ?? currency;
-  return `${amount.toLocaleString('ru-RU')} ${sym}`;
-}
+/* ── Заглушка: оплата через ссылку на мастера ─────────────────────── */
+class ContactProvider {
+  id = 'contact';
+  label = 'Связь с мастером';
+  isStub = true;
 
-/** Заглушка: имитирует сетевую задержку и возвращает фиктивный результат. */
-class StubProvider {
-  name = 'stub';
-
-  async createPayment({ amount, currency = 'RUB', description = '' }) {
-    // Имитация обращения к платёжному шлюзу
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+  async createPayment(order) {
     return {
-      status: 'pending_stub',
-      paymentId: `stub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      confirmationUrl: null,
-      amount,
-      currency,
-      description,
-      message:
-        'Платёж не проводился: это демонстрационная заглушка. ' +
-        'Реальный эквайринг будет подключён позже.',
+      redirectUrl: MASTER.contactUrl,
+      paymentId: `contact_${Date.now()}`,
+      message: `Оплата не подключена — переведём вас в ${MASTER.contactLabel}.`,
     };
   }
 }
 
-/**
- * Шаблон реального провайдера (ЮKassa). НЕ АКТИВЕН до появления бэкенда.
- * Боевая схема: браузер -> POST /api/payments/create -> бэкенд создаёт счёт
- * через ЮKassa API (Idempotence-Key, секретный ключ) -> возвращает confirmation_url.
- */
-class YooKassaProvider {
-  name = 'yookassa';
+/* ── Боевой провайдер: Platega API (включается после настройки бэкенда) */
+class PlategaProvider {
+  id = 'platega';
+  label = 'Platega';
+  isStub = false;
 
-  async createPayment(payload) {
-    const res = await fetch('/api/payments/create', {
+  async createPayment(order) {
+    const api = import.meta.env.VITE_PAYMENT_API;
+    if (!api) throw new Error('Не задан VITE_PAYMENT_API — эндпоинт создания платежа Platega.');
+    const res = await fetch(api, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...payload, provider: 'yookassa' }),
+      body: JSON.stringify({
+        amount: order.amount,
+        currency: order.currency || 'RUB',
+        orderId: order.orderId,
+        description: order.description,
+      }),
     });
-    if (!res.ok) throw new Error(`Ошибка создания платежа: ${res.status}`);
-    return res.json();
-  }
-}
-
-/** Шаблон Stripe Checkout. НЕ АКТИВЕН до появления бэкенда. */
-class StripeProvider {
-  name = 'stripe';
-
-  async createPayment(payload) {
-    const res = await fetch('/api/checkout/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...payload, provider: 'stripe' }),
-    });
-    if (!res.ok) throw new Error(`Ошибка создания сессии: ${res.status}`);
-    return res.json();
+    if (!res.ok) throw new Error(`Platega: ошибка создания платежа (${res.status})`);
+    const data = await res.json();
+    // Ожидаемый ответ бэкенда: { paymentUrl: "https://pay.platega.io/..." }
+    return { redirectUrl: data.paymentUrl, paymentId: data.paymentId ?? null };
   }
 }
 
 const providers = {
-  stub: new StubProvider(),
-  yookassa: new YooKassaProvider(),
-  stripe: new StripeProvider(),
+  contact: new ContactProvider(),
+  platega: new PlategaProvider(),
 };
 
-// В dev-режиме Vite подхватывает import.meta.env из .env (VITE_* переменные)
-const ACTIVE = import.meta.env?.VITE_PAYMENT_PROVIDER || 'stub';
-
-export function getPaymentProvider() {
-  return providers[ACTIVE] ?? providers.stub;
-}
+export const activeProvider =
+  providers[import.meta.env.VITE_PAYMENT_PROVIDER] ?? providers.contact;

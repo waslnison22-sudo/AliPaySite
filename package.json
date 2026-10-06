@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "AliPaySite — landing page with a payment-ready stub (YooKassa / Stripe)",
+  "description": "AliPaySite — landing page with a payment-ready stub (Contact stub + Platega)",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

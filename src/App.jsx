@@ -1,96 +1,164 @@
 import { useState } from 'react';
-import { getPaymentProvider, formatPrice } from './payment/provider.js';
+import Logo from './components/Logo.jsx';
+import { WORKS } from './data/works.js';
+import { MASTER } from './config/master.js';
+import { activeProvider } from './payment/provider.js';
 
-const PLANS = [
-  { id: 'basic', title: 'Базовый', price: 990, note: 'на 1 месяц' },
-  { id: 'pro', title: 'Про', price: 2490, note: 'на 1 месяц', popular: true },
-  { id: 'team', title: 'Команда', price: 7900, note: 'на 1 месяц' },
+const SERVICES = [
+  {
+    title: 'Косметический ремонт',
+    price: 'от 4 500 ₽/м²',
+    points: ['Поклейка обоев, покраска', 'Замена напольного покрытия', 'Уборка после работ'],
+  },
+  {
+    title: 'Ремонт под ключ',
+    price: 'от 9 800 ₽/м²',
+    featured: true,
+    points: ['Дизайн-проект и смета', 'Черновая и чистовая отделка', 'Электрика и сантехника', 'Гарантия 2 года'],
+  },
+  {
+    title: 'Отдельные работы',
+    price: 'по договорённости',
+    points: ['Укладка плитки', 'Электромонтаж', 'Сборка мебели'],
+  },
 ];
 
 export default function App() {
-  const [selected, setSelected] = useState('pro');
-  const [status, setStatus] = useState(null); // null | {kind:'loading'|'done'|'error'}
-  const plan = PLANS.find((p) => p.id === selected);
+  const [loading, setLoading] = useState(false);
 
-  async function handlePay() {
-    setStatus({ kind: 'loading' });
+  // Оплата-заглушка: вместо банковского эквайринга ведём клиента к мастеру.
+  async function handlePay(service) {
+    setLoading(true);
     try {
-      const provider = getPaymentProvider();
-      const result = await provider.createPayment({
-        amount: plan.price,
-        currency: 'RUB',
-        description: `AliPaySite: тариф «${plan.title}»`,
+      const result = await activeProvider.createPayment({
+        orderId: `ali-${Date.now()}`,
+        description: `${service.title} — заказ через AliPaySite`,
+        amount: service.price,
       });
-      setStatus({ kind: 'done', result });
+      if (result.message) console.info(result.message);
+      window.open(result.redirectUrl, '_blank', 'noopener');
     } catch (e) {
-      setStatus({ kind: 'error', message: e.message });
+      alert('Не удалось инициировать оплату: ' + e.message);
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <div className="page">
-      <header className="hero">
-        <h1>AliPaySite</h1>
-        <p className="tagline">Онлайн-оплата для вашего бизнеса — скоро здесь.</p>
-        <span className="badge badge-stub">Режим: заглушка • реальные платежи отключены</span>
+    <>
+      <header className="header">
+        <div className="container">
+          <a className="brand" href="#top">
+            <Logo size={38} />
+            <span className="brand-name">
+              Али<span>Pay</span> · мастер
+            </span>
+          </a>
+          <nav className="nav">
+            <a href="#services">Услуги</a>
+            <a href="#works">Работы</a>
+            <a href="#pay">Оплата</a>
+            <a href={MASTER.contactUrl}>Контакты</a>
+          </nav>
+        </div>
       </header>
 
-      <main>
-        <section className="plans">
-          {PLANS.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              className={`plan ${p.id === selected ? 'plan--active' : ''}`}
-              onClick={() => setSelected(p.id)}
-            >
-              {p.popular && <span className="badge badge-popular">Популярный</span>}
-              <h3>{p.title}</h3>
-              <div className="price">{formatPrice(p.price)}</div>
-              <div className="note">{p.note}</div>
-            </button>
-          ))}
+      <main id="top">
+        <section className="hero">
+          <div className="container">
+            <span className="badge">
+              {activeProvider.isStub ? 'Онлайн-оплата временно через мастера' : `Оплата: ${activeProvider.label}`}
+            </span>
+            <h1>
+              Ремонт и отделка <em>под ключ</em> от мастера Али
+            </h1>
+            <p>
+              Честная смета, аккуратная работа и гарантия. Выберите услугу — оплата
+              оформляется напрямую со мной, без посредников и предоплат втемную.
+            </p>
+            <div className="hero-actions">
+              <a className="btn btn-primary" href="#services">Выбрать услугу</a>
+              <a className="btn btn-ghost" href={MASTER.contactUrl}>
+                Написать в {MASTER.contactLabel.split(' ')[0]}
+              </a>
+            </div>
+          </div>
         </section>
 
-        <section className="paybox">
-          <button
-            type="button"
-            className="pay-btn"
-            onClick={handlePay}
-            disabled={status?.kind === 'loading'}
-          >
-            {status?.kind === 'loading' ? 'Обработка…' : `Оплатить ${formatPrice(plan.price)}`}
-          </button>
-
-          {status?.kind === 'done' && (
-            <div className="notice notice-ok">
-              <strong>Демо-платёж «выполнен» (без списания средств)</strong>
-              <p>{status.result.message}</p>
-              <p className="mono">ID: {status.result.paymentId}</p>
+        <section id="services">
+          <div className="container">
+            <h2 className="section-title">Услуги и цены</h2>
+            <p className="section-sub">Ориентировочные стоимости — финальная цена после замера и сметы.</p>
+            <div className="grid">
+              {SERVICES.map((s) => (
+                <article key={s.title} className={`card${s.featured ? ' featured' : ''}`}>
+                  <h3>{s.title}</h3>
+                  <div className="price">{s.price}</div>
+                  <ul>
+                    {s.points.map((p) => <li key={p}>{p}</li>)}
+                  </ul>
+                  <button className="btn btn-primary" disabled={loading} onClick={() => handlePay(s)}>
+                    Оплатить / Заказать
+                  </button>
+                </article>
+              ))}
             </div>
-          )}
-          {status?.kind === 'error' && (
-            <div className="notice notice-err">
-              <strong>Ошибка:</strong> <p>{status.message}</p>
-            </div>
-          )}
+          </div>
+        </section>
 
-          <details className="howto">
-            <summary>Как подключить настоящий приём платежей</summary>
-            <ol>
-              <li>Выберите провайдера: ЮKassa (РФ/СНГ) или Stripe (международные).</li>
-              <li>Заведите серверный эндпоинт <code>POST /api/payments/create</code> — секретные ключи должны быть только на сервере.</li>
-              <li>Скопируйте <code>.env.example</code> в <code>.env</code>, укажите <code>VITE_PAYMENT_PROVIDER=yookassa|stripe</code> и ключи.</li>
-              <li>В <code>src/payment/provider.js</code> классы <code>YooKassaProvider</code>/<code>StripeProvider</code> уже готовы к включению.</li>
-              <li>Настройте webhook подтверждения статуса платежа на бэкенде.</li>
-            </ol>
-          </details>
+        <section id="works">
+          <div className="container">
+            <h2 className="section-title">Фото работ</h2>
+            <p className="section-sub">Портфолио мастера — реальные объекты после ремонта.</p>
+            <div className="gallery">
+              {WORKS.map((w) => (
+                <figure key={w.title} className="work">
+                  <img src={w.src} alt={w.title} loading="lazy" />
+                  <figcaption className="work-meta">
+                    <strong>{w.title}</strong>
+                    <span className="tag">{w.tag}</span>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+            <div className="note">
+              <b>Пока здесь плейсхолдеры.</b> Твои фото не дошли до репозитория — положи их в{' '}
+              <code>public/photos/</code> и добавь пути в <code>src/data/works.js</code>, и галерея
+              сразу оживёт.
+            </div>
+          </div>
+        </section>
+
+        <section id="pay">
+          <div className="container">
+            <h2 className="section-title">Как оплатить</h2>
+            <div className="paybox">
+              <span className="status">
+                Провайдер: {activeProvider.label} {activeProvider.isStub && '· заглушка'}
+              </span>
+              <p>
+                Банковский эквайринг ещё не подключён. Сейчас кнопка «Оплатить» открывает{' '}
+                {MASTER.contactLabel} ({MASTER.contactUrl}) — там согласовываем сумму и способ
+                оплаты. В следующем обновлении подключим <b>Platega API</b>: оплата картой и СБП
+                прямо на сайте.
+              </p>
+              <div className="pay-methods">
+                <span>Скоро: карты Visa / MC / МИР</span>
+                <span>Скоро: СБП</span>
+                <span>Сейчас: напрямую мастеру</span>
+              </div>
+              <a className="btn btn-primary" href={MASTER.contactUrl}>Перейти к мастеру</a>
+            </div>
+          </div>
         </section>
       </main>
 
       <footer>
-        <p>© 2026 AliPaySite. Демонстрационная страница — оплата является заглушкой.</p>
+        <div className="container">
+          <Logo size={26} />
+          <span>© {new Date().getFullYear()} Али · AliPaySite — {MASTER.phone}</span>
+        </div>
       </footer>
-    </div>
+    </>
   );
 }
