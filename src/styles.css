@@ -37,3 +37,8 @@
   footer{display:block}
   footer a{display:inline-block;margin-top:6px}
 }
+
+/* Viewer viewport hardening */
+.viewer-box{overflow:auto;overscroll-behavior:contain}
+@media(max-width:600px){.viewer-box{max-height:calc(100dvh - 24px)}.viewer-box>img,.viewer-box>.image-fallback{height:min(52dvh,460px);max-height:52dvh}}
+@media(max-width:430px){.viewer-box{max-height:calc(100dvh - 16px)}.viewer-box>img,.viewer-box>.image-fallback{height:min(46dvh,390px);max-height:46dvh}}
