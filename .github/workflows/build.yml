@@ -3,29 +3,31 @@ name: Deploy AliPay to GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
+
+concurrency:
+  group: pages-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
+          package-manager-cache: false
       - name: Install dependencies
-        run: npm install
+        run: npm install --no-audit --no-fund
       - name: Build
         run: npm run build
       - name: Create Pages fallback
@@ -34,23 +36,33 @@ jobs:
         run: |
           test -f dist/index.html
           test -f dist/404.html
-          test -f dist/fox.svg
+          test -f dist/brand/fox-user.png
+          test -f dist/brand/alipay-logo.jpg
           test -d dist/assets
           test -d dist/photos
+          grep -q 'brand/fox-user.png' dist/index.html
+          ! grep -q 'fox.svg' dist/index.html
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/configure-pages@v6
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./dist
 
   deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
