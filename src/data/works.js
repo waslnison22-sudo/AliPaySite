@@ -6,7 +6,7 @@ export const WORKS=[
 {id:'03',src:asset('fa840ada8e29d790.jpeg'),title:'Одежда клиента · 01',label:'вещь клиента · нанесение'}
 ];
 export const FEED=[
-{id:'f1',src:asset('1fd20f1328bc0912.jpeg'),type:'WORK',date:'2026',title:'Деталь решает всё',text:'Показываем, как рисунок работает на готовой вещи.'},
-{id:'f2',src:asset('fa840ada8e29d790.jpeg'),type:'PROCESS',date:'2026',title:'В процессе',text:'От идеи и референса до согласованного рисунка и нанесения.'},
-{id:'f3',src:asset('b5e2675cde1bd228.jpeg'),type:'READY',date:'2026',title:'Готово',text:'Готовая вещь после нанесения рисунка.'}
+{id:'f1',src:asset('additional-hoodie.jpg'),type:'CLIENT',date:'2026',title:'Клиентская худи',text:'Большой рисунок на спине — отдельная работа на вещи клиента.'},
+{id:'f2',src:asset('1fd20f1328bc0912.jpeg'),type:'WORK',date:'2026',title:'Наш шоппер',text:'Готовая основа AliPay с нанесённым рисунком.'},
+{id:'f3',src:asset('fa840ada8e29d790.jpeg'),type:'CLIENT',date:'2026',title:'Одежда клиента',text:'Пример нанесения на готовую вещь клиента.'}
 ];
