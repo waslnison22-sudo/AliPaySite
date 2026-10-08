@@ -25,7 +25,7 @@ jobs:
         with:
           node-version: 22
       - name: Install dependencies
-        run: npm install
+        run: npm install --no-audit --no-fund
       - name: Build
         run: npm run build
       - name: Create Pages fallback
@@ -34,9 +34,12 @@ jobs:
         run: |
           test -f dist/index.html
           test -f dist/404.html
-          test -f dist/fox.svg
+          test -f dist/brand/fox-user.png
+          test -f dist/brand/alipay-logo.jpg
           test -d dist/assets
           test -d dist/photos
+          grep -q 'brand/fox-user.png' dist/index.html
+          ! grep -q 'fox.svg' dist/index.html
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
