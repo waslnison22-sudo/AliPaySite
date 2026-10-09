@@ -50,17 +50,11 @@ jobs:
       - name: Build
         run: npm run build
       - name: Create Pages fallback
-        run: cp dist/index.html dist/404.html
-      - name: Verify output
         run: |
-          test -f dist/index.html
-          test -f dist/404.html
-          test -f dist/brand/fox-user.png
-          test -f dist/brand/alipay-logo.jpg
-          test -d dist/assets
-          test -d dist/photos
-          grep -q 'brand/fox-user.png' dist/index.html
-          ! grep -q 'fox.svg' dist/index.html
+          cp dist/index.html dist/404.html
+          touch dist/.nojekyll
+      - name: Verify built site
+        run: npm run check:build
       - name: Setup Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/configure-pages@v6
