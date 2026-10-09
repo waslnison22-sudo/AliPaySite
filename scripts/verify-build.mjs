@@ -30,17 +30,17 @@ if (!html.includes('id="root"')) {
   fail('React root element is missing');
 }
 
-const scripts = [...html.matchAll(/<script\\b[^>]*\\bsrc=["']([^"']+)["'][^>]*>/gi)].map((m) => m[1]);
-const styles = [...html.matchAll(/<link\\b[^>]*\\bhref=["']([^"']+\\.css(?:\\?[^"']*)?)["'][^>]*>/gi)].map((m) => m[1]);
-if (!scripts.length || !scripts.some((src) => /assets\\/[^/]+\\.js(?:\\?.*)?$/.test(src))) {
+const scripts = [...html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi)].map((m) => m[1]);
+const styles = [...html.matchAll(/<link\b[^>]*\bhref=["']([^"']+\.css(?:\?[^"']*)?)["'][^>]*>/gi)].map((m) => m[1]);
+if (!scripts.length || !scripts.some((src) => /assets\/[^/]+\.js(?:\?.*)?$/.test(src))) {
   fail('no compiled JavaScript bundle referenced from dist/assets');
 }
-if (!styles.length || !styles.some((href) => /assets\\/[^/]+\\.css(?:\\?.*)?$/.test(href))) {
+if (!styles.length || !styles.some((href) => /assets\/[^/]+\.css(?:\?.*)?$/.test(href))) {
   fail('no compiled CSS bundle referenced from dist/assets');
 }
 
 for (const assetUrl of [...scripts, ...styles]) {
-  const relative = decodeURIComponent(assetUrl.split(/[?#]/, 1)[0]).replace(/^\\.\\//, '');
+  const relative = decodeURIComponent(assetUrl.split(/[?#]/, 1)[0]).replace(/^\.\//, '');
   if (relative.startsWith('/') || relative.includes('..')) {
     fail(`unexpected non-relative or traversal asset path: ${assetUrl}`);
     continue;
