@@ -34,7 +34,7 @@ jobs:
           npm_config_fetch_timeout: 300000
         run: |
           for attempt in 1 2 3; do
-            npm install --no-audit --no-fund --engine-strict && break
+            npm install --no-fund --engine-strict && break
             if [ "$attempt" -eq 3 ]; then
               echo "Dependency installation failed after 3 attempts" >&2
               exit 1
@@ -45,6 +45,8 @@ jobs:
           test -d node_modules/vite
           test -d node_modules/react
           test -d node_modules/@vitejs/plugin-react
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
       - name: Build
         run: npm run build
       - name: Create Pages fallback
