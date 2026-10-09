@@ -27,7 +27,24 @@ jobs:
           node-version: 20.19.0
           package-manager-cache: false
       - name: Install dependencies
-        run: npm install --no-audit --no-fund --engine-strict
+        env:
+          npm_config_fetch_retries: 5
+          npm_config_fetch_retry_mintimeout: 20000
+          npm_config_fetch_retry_maxtimeout: 120000
+          npm_config_fetch_timeout: 300000
+        run: |
+          for attempt in 1 2 3; do
+            npm install --no-audit --no-fund --engine-strict && break
+            if [ "$attempt" -eq 3 ]; then
+              echo "Dependency installation failed after 3 attempts" >&2
+              exit 1
+            fi
+            echo "npm install attempt $attempt failed; retrying in 10 seconds..."
+            sleep 10
+          done
+          test -d node_modules/vite
+          test -d node_modules/react
+          test -d node_modules/@vitejs/plugin-react
       - name: Build
         run: npm run build
       - name: Create Pages fallback
