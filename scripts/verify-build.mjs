@@ -19,6 +19,9 @@ const html = readFileSync(join(dist, 'index.html'), 'utf8');
 requireFile('404.html');
 requireFile('brand/fox-user.png');
 requireFile('brand/alipay-logo.jpg');
+for (const photo of ['b5e2675cde1bd228.jpeg', '1fd20f1328bc0912.jpeg', 'fa840ada8e29d790.jpeg', 'additional-hoodie.jpg']) {
+  requireFile(`photos/${photo}`);
+}
 
 if (html.includes('./src/main.jsx') || html.includes('/src/main.jsx')) {
   fail('HTML still points to uncompiled React source (src/main.jsx)');
